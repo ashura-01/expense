@@ -1,12 +1,19 @@
 import 'package:flutter/material.dart';
 
-class Home extends StatelessWidget{
+class Home extends StatelessWidget {
   const Home({super.key});
 
   @override
   Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+    return Scaffold(
+      appBar: AppBar(
+        backgroundColor: Colors.amber,
+        foregroundColor: Colors.black,
+        title: Text("Expense app"),
+      ),
+      body: Center(
+        child: Text("hello world"),
+      ),
+    );
   }
-
 }
