@@ -1,7 +1,16 @@
+import 'package:expense/expense.dart';
 import 'package:flutter/material.dart';
 
-class Home extends StatelessWidget {
+class Home extends StatefulWidget {
   const Home({super.key});
+
+  @override
+  State<Home> createState() => _HomeState();
+}
+
+class _HomeState extends State<Home> {
+
+    List<Expense> _expense = [];
 
   @override
   Widget build(BuildContext context) {
