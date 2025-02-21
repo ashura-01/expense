@@ -1,5 +1,5 @@
-import 'package:expense/expense.dart';
 import 'package:flutter/material.dart';
+import 'package:expense/expense.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -16,17 +16,33 @@ class _HomeState extends State<Home> {
     "entertainment",
     "bills"
   ];
-  final double _total = 0.0;
+  double _total = 0.0;
+
+  void _addExpense(
+      String title, double amount, DateTime date, String catagory) {
+    setState(() {
+      _expense.add(Expense(
+          title: title, amount: amount, date: date, catagory: catagory));
+      _total += amount;
+    });
+  }
+
+  void _removeExpense(int index){
+      setState(() {
+        _expense.removeAt(index);
+      });
+  }
 
   void _showForm(BuildContext context) {
-    TextEditingController _titleController = TextEditingController();
-    TextEditingController _amountController = TextEditingController();
+    TextEditingController titleController = TextEditingController();
+    TextEditingController amountController = TextEditingController();
+    String selectedCatagory = _catagory.first;
+    DateTime date = DateTime.now();
 
     showModalBottomSheet(
+      isScrollControlled: true,
       context: context,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.zero, // Makes the bottom sheet rectangular
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       builder: (_) {
         return Padding(
           padding: EdgeInsets.only(
@@ -35,50 +51,96 @@ class _HomeState extends State<Home> {
             left: 16,
             right: 16,
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: "Title:",
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.zero, // Rectangular border
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 1),
-                    borderRadius: BorderRadius.zero, // Rectangular border
-                  ),
-                ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              TextField(
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: "Amount:",
-                  border: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 2),
-                    borderRadius: BorderRadius.zero, // Rectangular border
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderSide: BorderSide(color: Colors.black, width: 1),
-                    borderRadius: BorderRadius.zero, // Rectangular border
+          child: SingleChildScrollView(
+            // ✅ Fix: Enables scrolling
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: titleController,
+                  keyboardType: TextInputType.text,
+                  decoration: InputDecoration(
+                    hintText: "Title:",
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.zero,
+                    ),
                   ),
                 ),
-              ),
-              SizedBox(
-                height: 10,
-              ),
-              DropdownButtonFormField(
-                  items: _catagory.map((catagory) => DropdownMenuItem(
-                        value: catagory,
-                        child: Text(catagory),
-                      )).toList(),
-                  onChanged: )
-            ],
+                SizedBox(height: 10),
+                TextField(
+                  controller: amountController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: "Amount:",
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 2),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 10),
+                DropdownButtonFormField(
+                  value: selectedCatagory,
+                  items: _catagory
+                      .map((catagory) => DropdownMenuItem(
+                            value: catagory,
+                            child: Text(catagory,
+                                style:
+                                    TextStyle(fontWeight: FontWeight.normal)),
+                          ))
+                      .toList(),
+                  onChanged: (value) {
+                    setState(() {
+                      // ✅ Fix: Ensures dropdown updates UI
+                      selectedCatagory = value!;
+                    });
+                  },
+                  decoration: InputDecoration(
+                    hintText: "Select Category",
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderSide: BorderSide(color: Colors.black, width: 1),
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  ),
+                ),
+                SizedBox(height: 30),
+                ElevatedButton(
+                  onPressed: () {
+                    if (titleController.text.isEmpty ||
+                        double.tryParse(amountController.text) == null) {
+                      return;
+                    } else {
+                      _addExpense(
+                          titleController.text,
+                          double.parse(amountController.text),
+                          date,
+                          selectedCatagory);
+                      Navigator.pop(
+                          context); // ✅ Fix: Closes bottom sheet after adding
+                    }
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.blueGrey,
+                    foregroundColor: Colors.white,
+                  ),
+                  child: Text("Add Expense"),
+                ),
+                SizedBox(height: 80),
+              ],
+            ),
           ),
         );
       },
@@ -91,8 +153,13 @@ class _HomeState extends State<Home> {
       appBar: AppBar(
         backgroundColor: Colors.amber,
         foregroundColor: Colors.black,
-        title: Text("Expense tracker"),
-        actions: [IconButton(onPressed: () {}, icon: Icon(Icons.add))],
+        title: Text("Expense Tracker"),
+        actions: [
+          IconButton(
+            onPressed: () => _showForm(context), // ✅ Fix: Opens bottom sheet
+            icon: Icon(Icons.add),
+          ),
+        ],
       ),
       body: Column(
         children: [
@@ -117,19 +184,32 @@ class _HomeState extends State<Home> {
           ),
           Expanded(
             child: ListView.builder(
-                itemCount: _expense.length,
-                itemBuilder: (context, index) {
-                  return Card(
+              itemCount: _expense.length,
+              itemBuilder: (context, index) {
+                return GestureDetector(
+                  onLongPress: (){
+                    _removeExpense(index);
+                  },
+                  child: Card(
                     child: ListTile(
                       leading: CircleAvatar(
-                        child: Text(_expense[index].catagory),
                         backgroundColor: Colors.blueAccent,
+                        child: Text(_expense[index]
+                            .catagory
+                            .substring(0, 1)
+                            .toUpperCase()), 
                       ),
                       title: Text(_expense[index].title),
-                      subtitle: Text(_expense[index].date.toString()),
+                      trailing: Text(_expense[index].amount.toString()),
+                      subtitle: Text(_expense[index]
+                          .date
+                          .toString()
+                          .split(' ')[0]), // ✅ Fix: Shorter date format
                     ),
-                  );
-                }),
+                  ),
+                );
+              },
+            ),
           )
         ],
       ),
